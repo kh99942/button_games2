@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Редактор таблиц</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+
+        /* Фиксированная панель легенды */
+        .legend-panel {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background-color: #f5f5f5;
+            padding: 10px 0;
+        }
+
+        .legend-header {
+            background-color: #002b5c;
+            color: white;
+            text-align: center;
+            padding: 15px;
+            font-size: 24px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .legend-row {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 10px;
+        }
+
+        .legend-cell {
+            flex: 1;
+            text-align: center;
+            padding: 5px 0;
+        }
+
+        .legend-item {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: black;
+            font-weight: bold;
+            font-size: 18px;
+            position: relative;
+        }
+        .red { background-color: #ff0000; }
+        .green { background-color: #00ff00; }
+        .blue { background-color: #0000ff; color: white; }
+        .yellow { background-color: #ffff00; }
+
+        /* Таблицы */
+        .section {
+            margin: 25px auto;
+            max-width: 800px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            background-color: #cccccc;
+            text-align: center;
+            padding: 10px;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        th, td {
+            border: 1px solid #000;
+            height: 50px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        /* Устанавливаем равную ширину для 4 столбцов */
+        th, td {
+            width: 25%;
+        }
+
+        /* Стили для цветных ячеек */
+        .green-cell {
+            background-color: #00ff00;
+        }
+        .red-cell {
+            background-color: #ff0000;
+        }
+
+        /* Стиль для строки суммы */
+        .sum-row td {
+            background-color: #ffffcc;
+            font-size: 20px;
+        }
+
+        /* Ссылка на вьювер */
+        .viewer-link {
+            text-align: center;
+            margin: 20px;
+            padding: 15px;
+            background-color: #002b5c;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            display: inline-block;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Ссылка на страницу просмотра -->
+    <div style="text-align: center; margin: 20px;">
+        <a href="viewer.html" class="viewer-link">Открыть страницу просмотра</a>
+    </div>
+
+    <!-- Фиксированная панель легенды -->
+    <div class="legend-panel">
+        <div class="legend-header">Легенда</div>
+        <div class="legend-row">
+            <div class="legend-cell"><div class="legend-item red" id="sum-col-0">0</div></div>
+            <div class="legend-cell"><div class="legend-item green" id="sum-col-1">0</div></div>
+            <div class="legend-cell"><div class="legend-item blue" id="sum-col-2">0</div></div>
+            <div class="legend-cell"><div class="legend-item yellow" id="sum-col-3">0</div></div>
+        </div>
+    </div>
+
+    <!-- Таблицы -->
+    <div class="section">
+        <div class="section-header">Тема 1</div>
+        <table data-table-id="1">
+            <tbody>
+                <tr><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+                <tr><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+                <tr><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+                <tr><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+                <tr><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+                <tr class="sum-row">
+                    <td>0</td>
+                    <td>0</td>
+                    <td>0</td>
+                    <td>0</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section">
+        <div class="section-header">Тема 2</div>
+        <table data-table-id="2">
+            <tbody>
+                <tr><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+                <tr><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+                <tr><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+                <tr><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+                <tr><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+                <tr class="sum-row">
+                    <td>0</td>
+                    <td>0</td>
+                    <td>0</td>
+                    <td>0</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Ключ для localStorage
+        const STORAGE_KEY = 'tableState_v1';
+        
+        // Значения для каждого ряда
+        const rowValues = {
+            0: { green: '+10', red: '-10' },
+            1: { green: '+20', red: '-20' },
+            2: { green: '+30', red: '-30' },
+            3: { green: '+40', red: '-40' },
+            4: { green: '+50', red: '-50' }
+        };
+
+        // Загрузка состояния из localStorage
+        function loadState() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                const state = JSON.parse(saved);
+                
+                document.querySelectorAll('table').forEach(table => {
+                    const tableId = table.getAttribute('data-table-id');
+                    const tableState = state[tableId];
+                    
+                    if (tableState) {
+                        const rows = table.querySelectorAll('tbody tr:not(.sum-row)');
+                        rows.forEach((row, rowIndex) => {
+                            const cells = row.querySelectorAll('td');
+                            cells.forEach((cell, colIndex) => {
+                                const cellState = tableState[rowIndex]?.[colIndex];
+                                if (cellState) {
+                                    cell.textContent = cellState.value;
+                                    cell.className = cellState.className;
+                                }
+                            });
+                        });
+                    }
+                });
+                
+                updateAllTables();
+            }
+        }
+
+        // Сохранение состояния в localStorage
+        function saveState() {
+            const state = {};
+            
+            document.querySelectorAll('table').forEach(table => {
+                const tableId = table.getAttribute('data-table-id');
+                state[tableId] = [];
+                
+                const rows = table.querySelectorAll('tbody tr:not(.sum-row)');
+                rows.forEach(row => {
+                    const rowData = [];
+                    const cells = row.querySelectorAll('td');
+                    cells.forEach(cell => {
+                        rowData.push({
+                            value: cell.textContent,
+                            className: cell.className
+                        });
+                    });
+                    state[tableId].push(rowData);
+                });
+            });
+            
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        }
+
+        // Функция для пересчёта суммы в таблице
+        function recalculateSum(table) {
+            const rows = table.querySelectorAll('tbody tr:not(.sum-row)');
+            const sumRow = table.querySelector('.sum-row');
+            const sumCells = sumRow.querySelectorAll('td');
+            
+            // Обнуляем суммы
+            const sums = [0, 0, 0, 0];
+            
+            // Считаем сумму для каждого столбца
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                cells.forEach((cell, colIndex) => {
+                    const text = cell.textContent.trim();
+                    let value = 0;
+                    
+                    if (text === '+10' || text === '+20' || text === '+30' || text === '+40' || text === '+50') {
+                        value = parseInt(text);
+                    } else if (text === '-10' || text === '-20' || text === '-30' || text === '-40' || text === '-50') {
+                        value = parseInt(text);
+                    }
+                    
+                    sums[colIndex] += value;
+                });
+            });
+            
+            // Обновляем ячейки суммы
+            sumCells.forEach((cell, index) => {
+                cell.textContent = sums[index];
+            });
+        }
+        
+        // Функция для обновления всех таблиц и квадратиков легенды
+        function updateAllTables() {
+            const tables = document.querySelectorAll('table');
+            
+            // Пересчитываем суммы в каждой таблице
+            tables.forEach(table => {
+                recalculateSum(table);
+            });
+            
+            // Считаем общую сумму по каждому столбцу из всех таблиц
+            const totalSums = [0, 0, 0, 0];
+            
+            tables.forEach(table => {
+                const sumRow = table.querySelector('.sum-row');
+                const sumCells = sumRow.querySelectorAll('td');
+                
+                sumCells.forEach((cell, colIndex) => {
+                    const value = parseInt(cell.textContent) || 0;
+                    totalSums[colIndex] += value;
+                });
+            });
+            
+            // Обновляем квадратики в легенде
+            totalSums.forEach((sum, index) => {
+                document.getElementById(`sum-col-${index}`).textContent = sum;
+            });
+        }
+        
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', function() {
+            loadState();
+            
+            const cells = document.querySelectorAll('td:not(.sum-row td)');
+            
+            cells.forEach(cell => {
+                cell.addEventListener('click', function() {
+                    const row = this.closest('tr');
+                    const rowIndex = Array.from(row.parentElement.children).indexOf(row);
+                    
+                    // Цикл: пустая → зелёная → красная → пустая
+                    if (this.classList.contains('green-cell')) {
+                        // Зелёная → красная
+                        this.classList.remove('green-cell');
+                        this.classList.add('red-cell');
+                        this.textContent = rowValues[rowIndex].red;
+                    } else if (this.classList.contains('red-cell')) {
+                        // Красная → пустая
+                        this.classList.remove('red-cell');
+                        this.textContent = '0';
+                    } else {
+                        // Пустая → зелёная
+                        this.classList.add('green-cell');
+                        this.textContent = rowValues[rowIndex].green;
+                    }
+                    
+                    // Пересчитываем и сохраняем
+                    updateAllTables();
+                    saveState();
+                });
+            });
+        });
+    </script>
+</body>
+</html>
